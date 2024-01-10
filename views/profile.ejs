@@ -8,7 +8,13 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h2 class="mb-4" id="imageContainer"></h2>
+        <h2 class="mb-4" id="imageContainer">
+    <% if (typeof imageName !== 'undefined' && imageName) { %>
+        <img src="/uploads/<%= imageName %>" style="width: 200px; height: 200px;" class="img-fluid" />
+    <% } else { %>
+        <img src="/uploads/placeholder.png" style="width: 200px; height: 200px;" class="img-fluid" />
+    <% } %>
+</h2>
         <form id="uploadForm" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="imageInput"></label>
@@ -24,43 +30,52 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQb9ZRA2gM1XQuAKFnjnjO4nKAI9Lx0GTQ+SKLFFw1Bie/HyalC7VvRVS3zmF12X" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8sh+WyPT8zhOR0aXmLzV9vbB1Rw5j1/6eVO6s+" crossorigin="anonymous"></script>
-    <script>document.getElementById('uploadButton').addEventListener('click', function() {
-    var formData = new FormData();
-    var imageFile = document.getElementById('imageInput').files[0];
-    formData.append('image', imageFile);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/upload', true);
-
-    xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) {
-            var percentComplete = (e.loaded / e.total) * 100;
-            document.getElementById('status').innerHTML = percentComplete + '% uploaded';
+    <script>
+    document.getElementById('uploadButton').addEventListener('click', function() {
+        var formData = new FormData();
+        var imageFile = document.getElementById('imageInput').files[0];
+        if (!imageFile) {
+            document.getElementById('status').innerHTML = 'Please select a file to upload.';
+            return;
         }
-    };
+        formData.append('image', imageFile);
 
-   xhr.onload = function() {
-    if (this.status == 200) {
-        var response = JSON.parse(this.response);
-        document.getElementById('status').innerHTML = 'Upload complete: ' + response.file.filename;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload', true);
 
-        // Add image to the page
-        var img = document.createElement('img');
-        img.src = '/uploads/' + response.file.filename;
-         img.style.width = '200px';
-            img.style.height = '200px';
-            img.classList.add('img-fluid'); 
-         // Adjust the path as necessary
-         document.getElementById('imageContainer').appendChild(img);
-    } else {
-        document.getElementById('status').innerHTML = 'Upload error. Try again.';
-    }
-};
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                var percentComplete = (e.loaded / e.total) * 100;
+                document.getElementById('status').innerHTML = percentComplete + '% uploaded';
+            }
+        };
 
+        xhr.onload = function() {
+            if (this.status == 200) {
+                var response = JSON.parse(this.response);
+                document.getElementById('status').innerHTML = 'Upload complete: ' + response.file.filename;
 
-    xhr.send(formData);
-});
+                // Add image to the page
+                var img = document.createElement('img');
+                img.src = '/uploads/' + response.file.filename;
+                img.style.width = '200px';
+                img.style.height = '200px';
+                img.classList.add('img-fluid');
+                document.getElementById('imageContainer').innerHTML = '';
+                document.getElementById('imageContainer').appendChild(img);
+            } else {
+                document.getElementById('status').innerHTML = 'Upload error: ' + this.statusText;
+            }
+        };
+
+        xhr.onerror = function() {
+            document.getElementById('status').innerHTML = 'Upload failed. Please try again.';
+        };
+
+        xhr.send(formData);
+    });
 </script>
+
 </body>
 </html>
 
